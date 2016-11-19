@@ -19,6 +19,8 @@ eRight = brick.encoder(E4);
 eLeft.reset();
 eRight.reset();
 
+brick.lineSensor("video2").init(true);
+
 var p = 0.25;
 var i = 0.001;
 var k = 0.1;
@@ -29,8 +31,6 @@ var s = 0;
 
 var xold = 0;
 var speed = 60;
-
-brick.lineSensor("video2").init(true);
 
 var calc_bias_error = function() {
 	var myTime = 0;
@@ -65,7 +65,7 @@ function wasPressed(_key)
 
 var next = 0;
 var terminate = 0;
-var tilt = readGyro()[5] / 100;
+var tilt = 0;
 var prevTilt = 0;
 
 var calc_gyro5 = function() {
@@ -95,13 +95,14 @@ var comeBack = function() {
 
 	calc_gyro5();
 	var disTilt = Math.atan2(ey, ex);
+	disTilt = -disTilt;
 
 	print(ex, ";", ey, "dist ", dist, "; tilt", tilt, "; disTilt ", disTilt);
 
 	print("reverting");
 
-	mLeft.setPower(-65);
-	mRight.setPower(65);
+	mLeft.setPower(65);
+	mRight.setPower(-65);
 
 	while (true) {
 		calc_gyro5();
@@ -111,6 +112,13 @@ var comeBack = function() {
 			mRight.setPower(0);
 			print(readGyro()[5]);
 			break;
+		}
+		if (tilt < disTilt) {
+			mLeft.setPower(60);
+			mRight.setPower(-60);
+		} else {
+			mLeft.setPower(-60);
+			mRight.setPower(60);
 		}
 		script.wait(50);
 	}
@@ -216,15 +224,16 @@ while (!terminate) {
 			if (xold > 0) {
 		print("left")
 				mLeft.setPower(-60);
-				mRight.setPower(0);
+				mRight.setPower(60);
 			} else {
 		print("right");
-				mLeft.setPower(0);
+				mLeft.setPower(60);
 				mRight.setPower(-60);
 			}
 		} else {
 			if (firstTime) {
-				print(gyro.read()[5] / 100);
+				calc_gyro5();
+				print(tilt);
 				xold = x;
 				firstTime = 0;
 			}
@@ -251,7 +260,7 @@ while (!terminate) {
 		encRightOld = encRight;
 		prevTilt = tilt;
 	}
-	script.wait(200);
+	script.wait(50);
 }
 
 brick.stop();
