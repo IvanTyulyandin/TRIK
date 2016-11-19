@@ -101,25 +101,32 @@ var comeBack = function() {
 
 	print("reverting");
 
-	mLeft.setPower(65);
-	mRight.setPower(-65);
+	//mLeft.setPower(65);
+	//mRight.setPower(-65);
 
+	if (tilt < disTilt) {
+			mLeft.setPower(100);
+			mRight.setPower(-100);
+		} else {
+			mLeft.setPower(-100);
+			mRight.setPower(100);
+		}
 	while (true) {
 		calc_gyro5();
 		print(tilt, ";", disTilt);
-		if (tilt - disTilt < 0.1) {
+		if (Math.abs(tilt - disTilt) < 0.1) {
+			script.wait(8);
 			mLeft.setPower(0);
 			mRight.setPower(0);
-			print(readGyro()[5]);
 			break;
 		}
-		if (tilt < disTilt) {
-			mLeft.setPower(60);
-			mRight.setPower(-60);
+		/*if (tilt < disTilt) {
+			mLeft.setPower(65);
+			mRight.setPower(-65);
 		} else {
-			mLeft.setPower(-60);
-			mRight.setPower(60);
-		}
+			mLeft.setPower(-65);
+			mRight.setPower(65);
+		}*/
 		script.wait(50);
 	}
 
