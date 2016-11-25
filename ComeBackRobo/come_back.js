@@ -8,6 +8,7 @@ var calibrateTime = 20000;
 var middleError = 0;
 var degInRad = 180 / 3.14;
 var readGyro = brick.gyroscope().read;
+var exec_time = 0;
 var pi = 3.1415926535897931
 
 var mLeft = brick.motor(M3);
@@ -89,54 +90,44 @@ var comeBack = function() {
 
 	script.wait(2000);
 
-	print("coming back");
+	print("coming back; time = ", new Date() - exec_time);
 
 	var dist = Math.sqrt(ex * ex + ey * ey);
 
 	calc_gyro5();
-	var disTilt = Math.atan2(ey, ex);
-	disTilt = -disTilt;
+	var disTilt = -Math.atan2(ey, ex);
 
-	print(ex, ";", ey, "dist ", dist, "; tilt", tilt, "; disTilt ", disTilt);
+	print("ex = ", ex, "; ","ey = ", ey, "dist = ", dist, "; tilt = ", tilt, "; disTilt = ", disTilt, " time = ", new Date() - exec_time);
 
 	print("reverting");
 
 	//mLeft.setPower(65);
 	//mRight.setPower(-65);
 
-	if (tilt < disTilt) {
-			mLeft.setPower(100);
-			mRight.setPower(-100);
-		} else {
-			mLeft.setPower(-100);
-			mRight.setPower(100);
-		}
 	while (true) {
 		calc_gyro5();
-		print(tilt, ";", disTilt);
-		if (Math.abs(tilt - disTilt) < 0.1) {
-			script.wait(8);
+		print("tilt = ", tilt, "; ","disTilt = ", disTilt, " time = ", new Date() - exec_time);
+		if (Math.abs(tilt - disTilt ) < 0.001) {
 			mLeft.setPower(0);
 			mRight.setPower(0);
 			break;
 		}
-		/*if (tilt < disTilt) {
-			mLeft.setPower(65);
-			mRight.setPower(-65);
+		if (tilt < disTilt) {
+			mLeft.setPower(60);
+			mRight.setPower(-60);
 		} else {
-			mLeft.setPower(-65);
-			mRight.setPower(65);
-		}*/
+			mLeft.setPower(-60);
+			mRight.setPower(60);
+		}
 		script.wait(50);
 	}
 
 //	var revEnc = (eLeft.readRawData() + eRight.readRawData());
-	print(eLeft.readRawData() , ";", eRight.readRawData());
-	print("reverted");
-	print(readGyro()[5]);
+	//print(eLeft.readRawData() , ";", eRight.readRawData());
+	print("reverted; time = ", new Date() - exec_time);
 
-	mLeft.setPower(0);
-	mRight.setPower(0);
+	//mLeft.setPower(0);
+	//mRight.setPower(0);
 
 	ex = 0;
 	ey = 0;
@@ -159,7 +150,7 @@ var comeBack = function() {
 
 		var diff = (encLeft - encRight) * 0.5;
 
-		print(dist, ";", encRight, ";",  encLeft, ";", readGyro()[5]);
+		print("dist = ", dist, "; ", "encRight = ", encRight, "; ","encLeft = ", encLeft, "; ", "time = ", new Date() - exec_time);
 
 		mLeft.setPower(70 - diff);
 		mRight.setPower(70 + diff);
@@ -176,7 +167,7 @@ var comeBack = function() {
 	encLeft = -eLeft.readRawData();
 	encRight = eRight.readRawData();
 
-	print(dist, ";", encRight, ";",  encLeft, ";", readGyro()[5]);
+	print("dist = ", dist, "; ","encRight = ", encRight, "; ","encLeft = ",  encLeft, ";", "time = ", new Date() - exec_time);
 
 }
 
@@ -191,6 +182,7 @@ while (!next) {
 			print("start");
 			timer.timeout.connect(comeBack);
 			timer.start();
+			exec_time = new Date();
 			brick.lineSensor("video2").detect();
 			next = 1;
 		break;
@@ -224,29 +216,29 @@ while (!terminate) {
 		x = xys[0];
 		s = xys[2];
 
-		print(x, ";", s);
+		//print(x, ";", s);
 
 		if (s < 12) {
 			firstTime = 1;
 			if (xold > 0) {
-		print("left")
+		print("turn left; time = ", new Date() - exec_time);
 				mLeft.setPower(-60);
 				mRight.setPower(60);
 			} else {
-		print("right");
+		print("turn right; time = ", new Date() - exec_time);
 				mLeft.setPower(60);
 				mRight.setPower(-60);
 			}
 		} else {
 			if (firstTime) {
 				calc_gyro5();
-				print(tilt);
+				print("tilt = ", tilt, "time = ", new Date() - exec_time);
 				xold = x;
 				firstTime = 0;
 			}
 
 			var yaw = x*p + (x - xold) * k;
-		print(s, x, yaw);
+			//print(s, x, yaw);
 			mLeft.setPower(-(speed + yaw));
 			mRight.setPower(-(speed - yaw));
 			xold = x;
@@ -261,7 +253,7 @@ while (!terminate) {
 		ex = ex + Math.cos(dtilt) * center;
 		ey = ey + Math.sin(dtilt) * center;
 
-			print(ex, ";", ey, "; tilt", tilt);
+			print("ex = ", ex, ";"," ey = ", ey, "; tilt = ", tilt, "time = ", new Date() - exec_time);
 
 		encLeftOld = encLeft;
 		encRightOld = encRight;
@@ -271,5 +263,5 @@ while (!terminate) {
 }
 
 brick.stop();
-print("finish");
+print("finish, time = ", new Date() - exec_time);
 script.quit();
