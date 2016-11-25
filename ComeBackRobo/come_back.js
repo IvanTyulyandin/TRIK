@@ -43,12 +43,12 @@ var calc_bias_error = function() {
 	}
 	// 8.75 * 10 == 87.5
 	middleError = sumOfAngles * 87.5 / calibrateTime; //mdps
-	print(middleError, " == middle error---------------------");
+	print(middleError, " == middle error--------------------- ;");
 }
 
 var gyro = brick.gyroscope();
 calc_bias_error();
-print("gyro inited");
+print("gyro inited ;");
 brick.playTone(500, 500);
 
 var key = 0;
@@ -90,41 +90,42 @@ var comeBack = function() {
 
 	script.wait(2000);
 
-	print("coming back; time = ", new Date() - exec_time);
+	print("coming back; time = ", new Date() - exec_time, " ;");
 
 	var dist = Math.sqrt(ex * ex + ey * ey);
 
 	calc_gyro5();
-	var disTilt = -Math.atan2(ey, ex);
+	var disTilt = Math.atan2(ey, ex);
 
-	print("ex = ", ex, "; ","ey = ", ey, "dist = ", dist, "; tilt = ", tilt, "; disTilt = ", disTilt, " time = ", new Date() - exec_time);
+	print("ex = ", ex, "; ","ey = ", ey, "dist = ", dist, "; tilt = ", tilt, "; disTilt = ", disTilt, " time = ", new Date() - exec_time, " ;");
 
-	print("reverting");
+	print("reverting ;");
 
 	//mLeft.setPower(65);
 	//mRight.setPower(-65);
+	
+	if (Math.abs(tilt - disTilt) > 0.003) {
+			mLeft.setPower(65);
+			mRight.setPower(-65);
+		} else {
+			mLeft.setPower(-65);
+			mRight.setPower(65);
+		}
+		script.wait(50);
 
 	while (true) {
 		calc_gyro5();
-		print("tilt = ", tilt, "; ","disTilt = ", disTilt, " time = ", new Date() - exec_time);
-		if (Math.abs(tilt - disTilt ) < 0.001) {
+		print("tilt = ", tilt, "; ","disTilt = ", disTilt, " time = ", new Date() - exec_time, " ;");
+		if (Math.abs(tilt - disTilt ) < 0.003) {
 			mLeft.setPower(0);
 			mRight.setPower(0);
 			break;
 		}
-		if (tilt < disTilt) {
-			mLeft.setPower(60);
-			mRight.setPower(-60);
-		} else {
-			mLeft.setPower(-60);
-			mRight.setPower(60);
-		}
-		script.wait(50);
 	}
 
 //	var revEnc = (eLeft.readRawData() + eRight.readRawData());
 	//print(eLeft.readRawData() , ";", eRight.readRawData());
-	print("reverted; time = ", new Date() - exec_time);
+	print("reverted; time = ", new Date() - exec_time, " ;");
 
 	//mLeft.setPower(0);
 	//mRight.setPower(0);
@@ -150,7 +151,7 @@ var comeBack = function() {
 
 		var diff = (encLeft - encRight) * 0.5;
 
-		print("dist = ", dist, "; ", "encRight = ", encRight, "; ","encLeft = ", encLeft, "; ", "time = ", new Date() - exec_time);
+		print("dist = ", dist, "; ", "encRight = ", encRight, "; ","encLeft = ", encLeft, "; ", "time = ", new Date() - exec_time, " ;");
 
 		mLeft.setPower(70 - diff);
 		mRight.setPower(70 + diff);
@@ -167,7 +168,7 @@ var comeBack = function() {
 	encLeft = -eLeft.readRawData();
 	encRight = eRight.readRawData();
 
-	print("dist = ", dist, "; ","encRight = ", encRight, "; ","encLeft = ",  encLeft, ";", "time = ", new Date() - exec_time);
+	print("dist = ", dist, "; ","encRight = ", encRight, "; ","encLeft = ",  encLeft, ";", "time = ", new Date() - exec_time, " ;");
 
 }
 
@@ -179,7 +180,7 @@ while (!next) {
 
 	switch (key) {
 		case startKey:
-			print("start");
+			print("start ;");
 			timer.timeout.connect(comeBack);
 			timer.start();
 			exec_time = new Date();
@@ -221,18 +222,18 @@ while (!terminate) {
 		if (s < 12) {
 			firstTime = 1;
 			if (xold > 0) {
-		print("turn left; time = ", new Date() - exec_time);
+		print("turn left; time = ", new Date() - exec_time, " ;");
 				mLeft.setPower(-60);
 				mRight.setPower(60);
 			} else {
-		print("turn right; time = ", new Date() - exec_time);
+		print("turn right; time = ", new Date() - exec_time, " ;");
 				mLeft.setPower(60);
 				mRight.setPower(-60);
 			}
 		} else {
 			if (firstTime) {
 				calc_gyro5();
-				print("tilt = ", tilt, "time = ", new Date() - exec_time);
+				print("tilt = ", tilt, "time = ", new Date() - exec_time, " ;");
 				xold = x;
 				firstTime = 0;
 			}
@@ -253,7 +254,7 @@ while (!terminate) {
 		ex = ex + Math.cos(dtilt) * center;
 		ey = ey + Math.sin(dtilt) * center;
 
-			print("ex = ", ex, ";"," ey = ", ey, "; tilt = ", tilt, "time = ", new Date() - exec_time);
+		print("ex = ", ex, ";"," ey = ", ey, "; tilt = ", tilt, "time = ", new Date() - exec_time, " ;");
 
 		encLeftOld = encLeft;
 		encRightOld = encRight;
@@ -263,5 +264,5 @@ while (!terminate) {
 }
 
 brick.stop();
-print("finish, time = ", new Date() - exec_time);
+print("finish, time = ", new Date() - exec_time, " ;");
 script.quit();
