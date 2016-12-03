@@ -80,7 +80,7 @@ var calc_gyro5 = function(cur_time) {
 	if (tilt < -3.14) {
 		tilt = 3.14 - (3.14 + tilt)
 	}
-	print("It was calc_gyro5 function, tilt = ", tilt, "; time_diff = ", cur_time - last_sample_time);
+	print("It's calc_gyro5 function, tilt = ", tilt, "; time_diff = ", cur_time - last_sample_time);
 	print();
 	last_sample_time = cur_time;
 }
