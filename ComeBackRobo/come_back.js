@@ -1,4 +1,3 @@
-//script.system("/etc/init.d/edge-line-sensor-ov7670  -v 2 start");
 script.system("echo 2 > /sys/class/misc/l3g42xxd/odr_selection");
 
 var stopKey = KeysEnum.Up;
@@ -36,19 +35,19 @@ var speed = 60;
 var calc_bias_error = function() {
 	var myTime = 0;
 	var sumOfAngles = 0;
-	while (myTime <= calibrateTime / 10) {
+	while (myTime <= calibrateTime / 50) {
 		sumOfAngles += gyro.read()[2];
 		myTime ++;
-		script.wait(10);
+		script.wait(50);
 	}
-	// 8.75 * 10 == 87.5
-	middleError = sumOfAngles * 87.5 / calibrateTime; //mdps
+	// 8.75 * 50 == 437.5
+	middleError = sumOfAngles * 437.5 / calibrateTime; //mdps
 	print(middleError, " == middle error--------------------- ;");
 }
 
 var gyro = brick.gyroscope();
 calc_bias_error();
-print("gyro inited ;");
+print("gyro inited;");
 brick.playTone(500, 500);
 
 var key = 0;
@@ -68,12 +67,22 @@ var next = 0;
 var terminate = 0;
 var tilt = 0;
 var prevTilt = 0;
+var last_sample_time;
 
-var calc_gyro5 = function() {
+var calc_gyro5 = function(cur_time) {
 	var angle_speed = gyro.read()[2] * 8.75; //mdps
 	tilt = tilt * 180 / pi;
-	tilt += (angle_speed - middleError) * 0.05 / 1000;
+	tilt += ((angle_speed - middleError) * (cur_time - last_sample_time)) / 1000000; 
 	tilt = tilt * pi / 180;
+	if (tilt > 3.14) {
+		tilt = -3.14 + (tilt - 3.14)
+	}
+	if (tilt < -3.14) {
+		tilt = 3.14 - (3.14 + tilt)
+	}
+	print("It was calc_gyro5 function, tilt = ", tilt, "; time_diff = ", cur_time - last_sample_time);
+	print();
+	last_sample_time = cur_time;
 }
 
 var timer = script.timer(20000);
@@ -90,42 +99,42 @@ var comeBack = function() {
 
 	script.wait(2000);
 
-	print("coming back; time = ", new Date() - exec_time, " ;");
+	print("coming back; time = ", new Date() - exec_time, ";");
 
 	var dist = Math.sqrt(ex * ex + ey * ey);
 
-	calc_gyro5();
+	calc_gyro5(new Date() - exec_time);
 	var disTilt = Math.atan2(ey, ex);
 
-	print("ex = ", ex, "; ","ey = ", ey, "dist = ", dist, "; tilt = ", tilt, "; disTilt = ", disTilt, " time = ", new Date() - exec_time, " ;");
+	print("ex = ", ex, "; ey = ", ey, "; dist = ", dist, "; tilt = ", tilt, "; disTilt = ", disTilt, "; time = ", new Date() - exec_time, ";");
 
-	print("reverting ;");
+	print("reverting;");
 
 	//mLeft.setPower(65);
 	//mRight.setPower(-65);
 	
-	if (Math.abs(tilt - disTilt) > 0.003) {
-			mLeft.setPower(65);
-			mRight.setPower(-65);
+	if (tilt > disTilt) {
+			mLeft.setPower(-75);
+			mRight.setPower(75);
 		} else {
-			mLeft.setPower(-65);
-			mRight.setPower(65);
+			mLeft.setPower(75);
+			mRight.setPower(-75);
 		}
-		script.wait(50);
 
 	while (true) {
-		calc_gyro5();
-		print("tilt = ", tilt, "; ","disTilt = ", disTilt, " time = ", new Date() - exec_time, " ;");
-		if (Math.abs(tilt - disTilt ) < 0.003) {
+		print("tilt = ", tilt, "; disTilt = ", disTilt, "; time = ", new Date() - exec_time, ";");
+		if (Math.abs(tilt - disTilt ) < 0.05) {
 			mLeft.setPower(0);
 			mRight.setPower(0);
 			break;
 		}
+		//script.wait(50);
+		calc_gyro5(new Date() - exec_time);
 	}
 
 //	var revEnc = (eLeft.readRawData() + eRight.readRawData());
 	//print(eLeft.readRawData() , ";", eRight.readRawData());
-	print("reverted; time = ", new Date() - exec_time, " ;");
+	print("reverted; time = ", new Date() - exec_time, ";");
 
 	//mLeft.setPower(0);
 	//mRight.setPower(0);
@@ -151,7 +160,7 @@ var comeBack = function() {
 
 		var diff = (encLeft - encRight) * 0.5;
 
-		print("dist = ", dist, "; ", "encRight = ", encRight, "; ","encLeft = ", encLeft, "; ", "time = ", new Date() - exec_time, " ;");
+		print("dist = ", dist, "; encRight = ", encRight, "; encLeft = ", encLeft, "; time = ", new Date() - exec_time, ";");
 
 		mLeft.setPower(70 - diff);
 		mRight.setPower(70 + diff);
@@ -168,7 +177,7 @@ var comeBack = function() {
 	encLeft = -eLeft.readRawData();
 	encRight = eRight.readRawData();
 
-	print("dist = ", dist, "; ","encRight = ", encRight, "; ","encLeft = ",  encLeft, ";", "time = ", new Date() - exec_time, " ;");
+	print("dist = ", dist, "; encRight = ", encRight, "; encLeft = ",  encLeft, "; time = ", new Date() - exec_time, ";");
 
 }
 
@@ -180,7 +189,7 @@ while (!next) {
 
 	switch (key) {
 		case startKey:
-			print("start ;");
+			print("start;");
 			timer.timeout.connect(comeBack);
 			timer.start();
 			exec_time = new Date();
@@ -203,6 +212,7 @@ var encLeftOld = 0;
 var encRightOld = 0;
 var encLeft = 0;
 var encRight = 0;
+last_sample_time = new Date() - exec_time;
 
 var firstTime = 1;
 
@@ -222,18 +232,19 @@ while (!terminate) {
 		if (s < 12) {
 			firstTime = 1;
 			if (xold > 0) {
-		print("turn left; time = ", new Date() - exec_time, " ;");
-				mLeft.setPower(-60);
-				mRight.setPower(60);
+		print("turn left; time = ", new Date() - exec_time, ";");
+				mLeft.setPower(-70);
+				mRight.setPower(70);
 			} else {
-		print("turn right; time = ", new Date() - exec_time, " ;");
-				mLeft.setPower(60);
-				mRight.setPower(-60);
+		print("turn right; time = ", new Date() - exec_time, ";");
+				mLeft.setPower(70);
+				mRight.setPower(-70);
 			}
 		} else {
 			if (firstTime) {
-				calc_gyro5();
-				print("tilt = ", tilt, "time = ", new Date() - exec_time, " ;");
+				calc_gyro5(new Date() - exec_time);
+				//script.wait(50);
+				print("tilt = ", tilt, "; time = ", new Date() - exec_time, ";");
 				xold = x;
 				firstTime = 0;
 			}
@@ -247,14 +258,14 @@ while (!terminate) {
 
 		encLeft = eLeft.readRawData();
 		encRight = -eRight.readRawData();
-		calc_gyro5();
+		calc_gyro5(new Date() - exec_time);
 
 		var center = (encLeft - encLeftOld + encRight - encRightOld) / 2;
 		var dtilt = tilt + (tilt - prevTilt) / 2;
 		ex = ex + Math.cos(dtilt) * center;
 		ey = ey + Math.sin(dtilt) * center;
 
-		print("ex = ", ex, ";"," ey = ", ey, "; tilt = ", tilt, "time = ", new Date() - exec_time, " ;");
+		print("ex = ", ex, "; ey = ", ey, "; tilt = ", tilt, "; time = ", new Date() - exec_time, ";");
 
 		encLeftOld = encLeft;
 		encRightOld = encRight;
@@ -264,5 +275,5 @@ while (!terminate) {
 }
 
 brick.stop();
-print("finish, time = ", new Date() - exec_time, " ;");
+print("finish, time = ", new Date() - exec_time, ";");
 script.quit();
