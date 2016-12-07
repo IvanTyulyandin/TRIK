@@ -74,14 +74,12 @@ var calc_gyro5 = function(cur_time) {
 	tilt = tilt * 180 / pi;
 	tilt += ((angle_speed - middleError) * (cur_time - last_sample_time)) / 1000000; 
 	tilt = tilt * pi / 180;
-	if (tilt > 3.14) {
-		tilt = -3.14 + (tilt - 3.14)
+	if (tilt > pi) {
+		tilt = -pi + (tilt - pi)
 	}
-	if (tilt < -3.14) {
-		tilt = 3.14 - (3.14 + tilt)
+	if (tilt < -pi) {
+		tilt = pi - (pi + tilt)
 	}
-	print("It's calc_gyro5 function, tilt = ", tilt, "; time_diff = ", cur_time - last_sample_time);
-	print();
 	last_sample_time = cur_time;
 }
 
@@ -114,21 +112,20 @@ var comeBack = function() {
 	//mRight.setPower(-65);
 	
 	if (tilt > disTilt) {
-			mLeft.setPower(-75);
-			mRight.setPower(75);
+			mRight.setPower(65);
+			mLeft.setPower(-65);
 		} else {
-			mLeft.setPower(75);
-			mRight.setPower(-75);
+			mRight.setPower(-65);
+			mLeft.setPower(65);
 		}
 
 	while (true) {
 		print("tilt = ", tilt, "; disTilt = ", disTilt, "; time = ", new Date() - exec_time, ";");
-		if (Math.abs(tilt - disTilt ) < 0.05) {
+		if (Math.abs(tilt - disTilt ) < 0.02) {
 			mLeft.setPower(0);
 			mRight.setPower(0);
 			break;
 		}
-		//script.wait(50);
 		calc_gyro5(new Date() - exec_time);
 	}
 
@@ -227,18 +224,16 @@ while (!terminate) {
 		x = xys[0];
 		s = xys[2];
 
-		//print(x, ";", s);
-
 		if (s < 12) {
 			firstTime = 1;
 			if (xold > 0) {
 		print("turn left; time = ", new Date() - exec_time, ";");
-				mLeft.setPower(-70);
-				mRight.setPower(70);
+				mLeft.setPower(-60);
+				mRight.setPower(60);
 			} else {
 		print("turn right; time = ", new Date() - exec_time, ";");
-				mLeft.setPower(70);
-				mRight.setPower(-70);
+				mLeft.setPower(60);
+				mRight.setPower(-60);
 			}
 		} else {
 			if (firstTime) {
