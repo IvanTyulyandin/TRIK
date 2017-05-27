@@ -91,15 +91,13 @@ var main = function()
 		encRight = -eRight.readRawData();
 		
 		script.wait(50); //задержка на 0.05 секунды
-		tiltMdps = gyro.read()[6]; // эта команда считывает скорость изменения угла отклонения от оси Х
-		tilt = tiltMdps  / 1000 * 0.05 // считаем в градусах
-		
+		tilt = gyro.read()[6] / 1000; // эта команда считывает угол отклонения от оси Х
 
 		//считаем текущие координаты, см презентацию по одометрии
 		center = (encLeft - encLeftOld + encRight - encRightOld) / 2;
 		dtilt = tilt + (tilt - prevTilt) / 2;
-		ex = ex + Math.cos(toRadians (dtilt)) * center;
-		ey = ey + Math.sin(toRadians (dtilt)) * center;
+		ex = ex + Math.cos(toRadians(dtilt)) * center;
+		ey = ey + Math.sin(toRadians(dtilt)) * center;
 
 		encLeftOld = encLeft;
 		encRightOld = encRight;
@@ -109,11 +107,11 @@ var main = function()
 		if (counter == CONST_FOR_COUNTER)
 		{
 			roboWasAt.push([ex, ey]);
-			print(ex / 10.0, " || ", ey / 10.0);
+			print(ex .toFixed(2) , " || ", ey.toFixed(2), "  ", tilt);
 			counter = 0;
 		}
 		
-		script.wait(30);
+		script.wait(50);
 		
 	}
 }
