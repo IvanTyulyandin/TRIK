@@ -204,7 +204,7 @@ function threshold2(level, pic, height, width) {
 function printPic(pic) {
 	var debugStr = '';
 	var color = 0;
-	var asciiGraph = ['@', 'a', 'o', '.', ' '];
+	var asciiGraph = ['@', 'a', '_', '.', ' '];
 	var step = 255 / (asciiGraph.length);
 	for (var j = 0; j < total_height; j += 2)
 	{
