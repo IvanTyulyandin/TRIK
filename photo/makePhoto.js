@@ -6,11 +6,73 @@ var h = 120;
 var w = 160;
 var scale = 1;
 var photoBW = [];
+var histogram = [];
+var histSize = 256;
 
-var grayscale = "MXOmxo=|:-....    "
-if (photo.length != h*w) {
-  print ("Incorrect size: " + photo.length)
-} else
+function calculateHistogram() {
+	for (var i = 0; i < histSize; i ++)
+		histogram[i] = 0;
+
+	var curPixelLine = 0;
+	for (var i = 0; i < h; i ++)
+	{
+		curPixelLine = i * w;
+		for (var j = 0; j < w; j ++)
+			histogram[Math.floor(photoBW[curPixelLine + j])] += 1;
+	}
+}
+
+var grayscale = "@a|:-. "
+var numOfBins = grayscale.length;
+var rangeBins = [];
+var binCapacity = h * w / numOfBins;
+
+function getRange() {
+	for (var i = 0; i < numOfBins; i ++)
+		rangeBins[i] = 0;
+
+	var curBin = 0;
+	var curSum = 0;
+	var i = 0;
+	var lastIndexBin = numOfBins - 1;
+	for (; (i < histSize) && (curBin < lastIndexBin); i ++)
+	{
+		curSum += histogram[i];
+		if (curSum > binCapacity)
+		{
+			curBin ++;
+			curSum = 0;
+		}
+		rangeBins[curBin] = i;
+	}
+	
+	for (; curBin <= lastIndexBin; curBin ++)
+		rangeBins[curBin] = histSize;
+}
+
+
+var mapColorToLetter = [];
+
+function initMapColorToLetter()
+{
+	var curBin = 0;
+	for (var i = 0; i < histSize; i ++)
+	{
+		if (rangeBins[curBin] <= i)
+		{
+			curBin ++;
+		}
+		mapColorToLetter[i] = grayscale[curBin];
+	}
+}
+
+
+if (photo.length != h * w) 
+{
+	print ("Incorrect size: " + photo.length)
+} 
+else
+{
 for(var i = 0; i < h; i++) {
         var str = "";
         for(var j = 0; j < w; j++) {
@@ -23,6 +85,21 @@ for(var i = 0; i < h; i++) {
         }
         print(str)
 }
+
+	calculateHistogram()
+	getRange();
+	initMapColorToLetter();
+
+	for(var i = 0; i < h; i++) {
+		var str = "";
+		for(var j = 0; j < w; j++) {
+			var p = photoBW[j+i*w];
+			str+=mapColorToLetter[p];
+        }
+        print(str)
+	}
+}
+
 print("Finished photoBW in " + (Date.now()-startTime));
 print(photoBW.length)
  
