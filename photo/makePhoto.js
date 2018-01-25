@@ -22,7 +22,7 @@ function calculateHistogram() {
 	}
 }
 
-var grayscale = "@a|:-. "
+var grayscale = "@ao:-. "
 var numOfBins = grayscale.length;
 var rangeBins = [];
 var binCapacity = h * w / numOfBins;
@@ -35,20 +35,26 @@ function getRange() {
 	var curSum = 0;
 	var i = 0;
 	var lastIndexBin = numOfBins - 1;
+	
 	for (; (i < histSize) && (curBin < lastIndexBin); i ++)
 	{
-		curSum += histogram[i];
-		if (curSum > binCapacity)
+		var diff = binCapacity - curSum;
+		
+		if ( Math.abs(diff) < Math.abs(diff - histogram[i]) )
 		{
 			curBin ++;
 			curSum = 0;
 		}
+
+		curSum += histogram[i];
 		rangeBins[curBin] = i;
 	}
 	
 	for (; curBin <= lastIndexBin; curBin ++)
 		rangeBins[curBin] = histSize;
 }
+
+
 
 
 var mapColorToLetter = [];
