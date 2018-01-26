@@ -1,3 +1,4 @@
+
 var startTime = Date.now();
 var source_pic = getPhoto();
 print("Finished photo in " + (Date.now()-startTime));
@@ -208,7 +209,7 @@ function calculateHistogram() {
 }
 
 // binarization using 2 elems in grayscale
-var grayscale = "@a. ";
+var grayscale = "@#ao|-. ";
 var numOfBins = grayscale.length;
 var rangeBins = [];
 var binCapacity = total_height * total_width / numOfBins;
@@ -309,49 +310,58 @@ function printHistogram()
 	}
 }
 
-if (source_pic.length != total_height * total_width) 
-{
-	print ("Incorrect size: " + source_pic.length)
-} 
-else
-{
-	// init pic, grayscale mode
-	for(var i = 0; i < total_height; i += 1) 
-	{
-		for(var j = 0; j < total_width; j += 1) 
-		{
-			var x = (j + i*scale*total_width )*scale;
-			var p = source_pic[x];
-			p = (((p & 0xff0000) >> 18) + ((p & 0xff00) >> 10) + ((p&0xff) >> 2));
-			pic[j+i*total_width]=p;
-		}
-	}
-	
-	
-	calculateHistogram();
-	getRange();
-	initMapColorToLetter();
-	printPic(pic);
 
-	print("-------------------------------------------------------------");
-	var corners;
-	var calculated_colors;
-	var TRY_COUNT = 1;
-	for (var i = 0; i < TRY_COUNT; i += 1)
+for (var cnt = 0; cnt < 100; cnt ++)
+{
+	if (source_pic.length != total_height * total_width) 
 	{
-	    var thresh = threshold2(100, pic, total_height, total_width);
-		printBinPic(pic);
-	    corners = findCorners(thresh, 5);
-	    var grid_corners = findGridCorners(corners, marker_size)
-	    calculated_colors = detectCode(thresh, grid_corners, 3);
+		print ("Incorrect size: " + source_pic.length);
+		print("Runned " + cnt + " times");
+	} 
+	else
+	{
+		// init pic, grayscale mode
+		for(var i = 0; i < total_height; i += 1) 
+		{
+			for(var j = 0; j < total_width; j += 1) 
+			{
+				var x = (j + i*scale*total_width )*scale;
+				var p = source_pic[x];
+				p = (((p & 0xff0000) >> 18) + ((p & 0xff00) >> 10) + ((p&0xff) >> 2));
+				pic[j+i*total_width]=p;
+			}
+		}
+		
+		
+		calculateHistogram();
+		getRange();
+		initMapColorToLetter();
+		printPic(pic);
+	
+		print("-------------------------------------------------------------");
+		var corners;
+		var calculated_colors;
+		var TRY_COUNT = 1;
+/*		
+		for (var i = 0; i < TRY_COUNT; i += 1)
+		{
+		    var thresh = threshold2(rangeBins[1], pic, total_height, total_width);
+			printBinPic(pic);
+		    corners = findCorners(thresh, 9);
+		    var grid_corners = findGridCorners(corners, marker_size)
+		    calculated_colors = detectCode(thresh, grid_corners, 3);
+		}
+		printHistogram();
+*/
 	}
-	printHistogram();
+	script.wait(1000);
+	source_pic = getPhoto();
 }
     
 
-print((Date.now() - startTime) / TRY_COUNT);
-print("Colors:", calculated_colors);
-print("Corners:", corners);
+//print((Date.now() - startTime) / TRY_COUNT);
+//print("Colors:", calculated_colors);
+//print("Corners:", corners);
 
 // threshold -- 110
 // corners -- 212
