@@ -1,45 +1,29 @@
-
-var sourcePic = brick.getStillImage("/dev/video0");
-print(sourcePic.length);
-
-var pic_large = [];
-
-var R = 0;
-var G = 0;
-var B = 0;
-for (var i = 0; i < 320 * 240 * 4; i += 4) {
-	// format is 0xffRRGGBB, so skip sourcePic[i]
-	R = sourcePic[i + 1];
-	G = sourcePic[i + 2];
-	B = sourcePic[i + 3];
-	//print(0.2989 * R + 0.5870 * G + 0.1140 * B);
-	pic_large.push(Math.round(0.2989 * R + 0.5870 * G + 0.1140 * B).toFixed(2));
-}
+var startTime = Date.now();
+var source_pic = getPhoto();
+print("Finished photo in " + (Date.now()-startTime));
+startTime = Date.now();
 
 var pic = [];
 
 var marker_size = 5;
 var total_width = 320 / 2;
-var total_height = 240 / 2 ;
+var total_height = 240 / 2;
 var prob = 25 * 5 * 5;
 
-for (var x = 0; x < total_width; ++x)
-  for (var y = 0; y < total_height; ++y)
-    pic[y * total_width + x] = pic_large[y * 320 * ( 240 / total_height) + (x * 320 / total_width) ];
 
 function getColor(pic, x, y) {
-    return pic[y * total_width + x];
+	return pic[y * total_width + x];
 }
 
 function squareAverage(pic, x, y, diam) {
-    var sum = 0;
-    var start_row = y  * total_width;        
-    var end_row = start_row + diam * total_width;
-    for (var index = start_row + x; index < end_row; index += total_width) {
-        for (var j = 0; j < diam; j++) {
-            sum += pic[index + j];
-        } 
-    }
+	var sum = 0;
+	var start_row = y  * total_width;        
+	var end_row = start_row + diam * total_width;
+
+	for (var index = start_row + x; index < end_row; index += total_width)
+		for (var j = 0; j < diam; j += 1)
+			sum += pic[index + j];
+
     return sum; 
 }
 
@@ -73,7 +57,7 @@ function findGridCorners(corners, marker_size) {
     var k_dx = (down_line_x2 - down_line_x1) * mks;
     var k_dy = (down_line_y2 - down_line_y1) * mks;
     
-    for (var i = 0; i < marker_size + 1; i++) {
+    for (var i = 0; i < marker_size + 1; i += 1) {
         
         var up_x = upper_line_x1 + k_ux * i;
         var up_y = upper_line_y1 + k_uy * i;
@@ -85,7 +69,7 @@ function findGridCorners(corners, marker_size) {
         var k_y = (down_y - up_y) * mks;
  
 
-        for (j = 0; j < marker_size + 1; j++) {
+        for (j = 0; j <= marker_size; j += 1) {
             
             var point_x = up_x + k_x * j;
             var point_y = up_y + k_y * j; 
@@ -98,12 +82,15 @@ function findGridCorners(corners, marker_size) {
 
 function detectCode(pic, grid_corners, diam) {
     var calculated_colors = []
-    for (var i = 0; i < marker_size; i++) {
-        for (var j = 0; j < marker_size; j++) {
-            lu_index = i * (marker_size + 1) + j;
-            ld_index = i * (marker_size + 1) + j + 1;
-            ru_index = (i + 1) * (marker_size + 1) + j;
-            rd_index = (i + 1) * (marker_size + 1) + j + 1;
+	var markerSizePlusOne = marker_size + 1;
+	var shiftedDiam = diam << 8;
+
+    for (var i = 0; i < marker_size; i += 1) {
+        for (var j = 0; j < marker_size; j += 1) {
+            lu_index = i * (markerSizePlusOne) + j;
+            ld_index = i * (markerSizePlusOne) + j + 1;
+            ru_index = (i + 1) * (markerSizePlusOne) + j;
+            rd_index = (i + 1) * (markerSizePlusOne) + j + 1;
             
             var lu = grid_corners[lu_index];
             var ld = grid_corners[ld_index];
@@ -111,7 +98,7 @@ function detectCode(pic, grid_corners, diam) {
             var rd = grid_corners[rd_index];
 
             grid_color = getCenterColor(pic, lu, ld, ru, rd, diam);
-            if (grid_color <  diam << 8) {
+            if (grid_color < shiftedDiam) {
                 calculated_colors.push(0);
             } else {
                 calculated_colors.push(1);
@@ -123,8 +110,8 @@ function detectCode(pic, grid_corners, diam) {
 
 function findULCorner(pic, diam) {
     var color = 1;
-    for (var i = 0; i < total_height; i++) {
-        for (var j = 0; j <= i; j++) {
+    for (var i = 0; i < total_height; i += 1) {
+        for (var j = 0; j <= i; j += 1) {
             var x = j;
             var y = i - j;
             if (getColor(pic, x, y) == 0) {
@@ -139,8 +126,8 @@ function findULCorner(pic, diam) {
 
 function findDLCorner(pic, diam) {
     var color = 1;
-    for (var i = 0; i < total_height; i++) {
-        for (var j = 0; j <= i; j++) {
+    for (var i = 0; i < total_height; i += 1) {
+        for (var j = 0; j <= i; j += 1) {
             var x = j;
             var y = total_height - (i - j);
             if (getColor(pic, x, y) == 0) {
@@ -154,8 +141,8 @@ function findDLCorner(pic, diam) {
 }
 
 function findURCorner(pic, diam) {
-    for (var i = 0; i < total_height; i++) {
-        for (var j = 0; j <= i; j++) {
+    for (var i = 0; i < total_height; i += 1) {
+        for (var j = 0; j <= i; j += 1) {
             var x = total_width - j;
             var y = i - j;
             if (getColor(pic, x, y) == 0) {
@@ -169,8 +156,8 @@ function findURCorner(pic, diam) {
 }
 
 function findDRCorner(pic, diam) {
-    for (var i = 0; i < total_height; i++) {
-        for (var j = 0; j <= i; j++) {
+    for (var i = 0; i < total_height; i += 1) {
+        for (var j = 0; j <= i; j += 1) {
             var x = total_width - j;
             var y = total_height - (i - j);
             if (getColor(pic, x, y) == 0) {
@@ -190,7 +177,7 @@ function findCorners(pic, diam) {
 
 function threshold2(level, pic, height, width) {
     var length = pic.length;
-    for (var i = 0; i < length; i++) {
+    for (var i = 0; i < length; i += 1) {
         var color = pic[i];
         if (color < level) {
             pic[i] = 0;
@@ -198,46 +185,171 @@ function threshold2(level, pic, height, width) {
             pic[i] = 255;
         }
     }
+
     return pic;        
 }
 
-function printPic(pic) {
-	var debugStr = '';
-	var color = 0;
-	var asciiGraph = ['@', 'a', '_', '.', ' '];
-	var step = 255 / (asciiGraph.length);
-	for (var j = 0; j < total_height; j += 2)
+// ------------------------------------------------------------------------------------------------------------------
+var scale = 1;
+var histogram = [];
+var histSize = 256;
+
+function calculateHistogram() {
+	for (var i = 0; i < histSize; i += 1)
+		histogram[i] = 0;
+
+	var curPixelLine = 0;
+	for (var i = 0; i < total_height; i += 1)
 	{
-		debugStr = '';
-		for (var k = 0; k < total_width; k ++)
-		{
-			for (var cnt = 0; cnt < asciiGraph.length; cnt ++)
-			{
-				if (pic[j * total_width + k] <= cnt * step)
-				{
-					debugStr += asciiGraph[cnt];
-					break;
-				}
-			}
-		}
-		print(debugStr);
+		curPixelLine = i * total_width;
+		for (var j = 0; j < total_width; j += 1)
+			histogram[Math.floor(pic[curPixelLine + j])] += 1;
 	}
 }
 
-var start = Date.now();
-    
-var corners;
-var calculated_colors;
-var TRY_COUNT = 1;
-for (var i = 0; i < TRY_COUNT; i++) {
-    printPic(pic);
-    var thresh = threshold2(70, pic, total_height, total_width);
-    corners = findCorners(thresh, 5);
-    var grid_corners = findGridCorners(corners, marker_size)
-    calculated_colors = detectCode(thresh, grid_corners, 3);
+// binarization using 2 elems in grayscale
+var grayscale = "@a. ";
+var numOfBins = grayscale.length;
+var rangeBins = [];
+var binCapacity = total_height * total_width / numOfBins;
+
+function getRange() {
+	for (var i = 0; i < numOfBins; i += 1)
+		rangeBins[i] = 0;
+
+	var curBin = 0;
+	var curSum = 0;
+	var i = 0;
+	var lastIndexBin = numOfBins - 1;
+	
+	for (; (i < histSize) && (curBin < lastIndexBin); i  += 1)
+	{
+		var diff = binCapacity - curSum;
+		
+		if ( Math.abs(diff) < Math.abs(diff - histogram[i]) )
+		{
+			curBin ++;
+			curSum = 0;
+		}
+
+		curSum += histogram[i];
+		rangeBins[curBin] = i;
+	}
+	
+	for (; curBin <= lastIndexBin; curBin += 1)
+		rangeBins[curBin] = histSize;
 }
 
-print((Date.now() - start) / TRY_COUNT);
+
+var mapColorToLetter = [];
+
+function initMapColorToLetter()
+{
+	var curBin = 0;
+	for (var i = 0; i < histSize; i += 1)
+	{
+		if (rangeBins[curBin] <= i)
+		{
+			curBin += 1;
+		}
+		mapColorToLetter[i] = grayscale[curBin];
+	}
+}
+
+
+// ------------------------------------------------------------------------------------------------------------------
+
+function printPic(pic) {
+	for(var i = 0; i < total_height; i += 1) 
+	{
+		var str = "";
+		for(var j = 0; j < total_width; j += 1) 
+		{
+			var p = pic[j+i*total_width];
+			str+=mapColorToLetter[p];
+		}
+		print(str)
+	}
+}
+
+
+function printBinPic(pic) {
+	for (var i = 0; i < total_height; i += 1)
+	{
+		var str = "";
+		for (var j = 0; j < total_width; j += 1)
+		{
+			if (pic[j + i * total_width] == 0)
+				str += '@';
+			else 
+				if (pic[j + i * total_width] == 255)
+					str += '.'				
+				else 
+				{
+					print("Bad usage of printBinPic");
+					return;
+				}
+		}
+		print(str);
+	}
+}
+
+String.prototype.repeat= function(n){
+    n= n || 1;
+    return Array(n+1).join(this);
+}
+
+function printHistogram()
+{
+	for (var i =0; i < histogram.length; ++i)
+	{
+		var h = Math.floor(histogram[i]/4)
+		if (h>0)
+		   print(i + "|" + Array(h).join("*"));
+	}
+}
+
+if (source_pic.length != total_height * total_width) 
+{
+	print ("Incorrect size: " + source_pic.length)
+} 
+else
+{
+	// init pic, grayscale mode
+	for(var i = 0; i < total_height; i += 1) 
+	{
+		for(var j = 0; j < total_width; j += 1) 
+		{
+			var x = (j + i*scale*total_width )*scale;
+			var p = source_pic[x];
+			p = (((p & 0xff0000) >> 18) + ((p & 0xff00) >> 10) + ((p&0xff) >> 2));
+			pic[j+i*total_width]=p;
+		}
+	}
+	
+	
+	calculateHistogram();
+	getRange();
+	initMapColorToLetter();
+	printPic(pic);
+
+	print("-------------------------------------------------------------");
+	var corners;
+	var calculated_colors;
+	var TRY_COUNT = 1;
+	for (var i = 0; i < TRY_COUNT; i += 1)
+	{
+	    var thresh = threshold2(100, pic, total_height, total_width);
+		printBinPic(pic);
+	    corners = findCorners(thresh, 5);
+	    var grid_corners = findGridCorners(corners, marker_size)
+	    calculated_colors = detectCode(thresh, grid_corners, 3);
+	}
+	printHistogram();
+}
+    
+
+print((Date.now() - startTime) / TRY_COUNT);
 print("Colors:", calculated_colors);
 print("Corners:", corners);
 
